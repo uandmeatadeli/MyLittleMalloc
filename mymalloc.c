@@ -9,10 +9,12 @@ static double memory[MEMLENGTH];
 
 #define heapstart ((char*)memory)
 
-void *checkAhead(struct header, size_t size){
+/*
+int isAhead(struct header, size_t size){
     
+    return 1;
 }
-
+*/
 void *mymalloc(size_t size, char *file, int line){
     
     // Cast pointer to memory to char* as the start of the Heap,
@@ -125,6 +127,6 @@ void *mymalloc(size_t size, char *file, int line){
 }
 
 
-void myfree(void *ptr, char *file, int file){
+void myfree(void *ptr, char *file, int line){
 
 }
