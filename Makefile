@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -fsanitize=address -std=c99 -O2
+CFLAGS = -Wall -fsanitize=address -std=c99 -O2 -g
 
 memtest: memtest.o mymalloc.o
 	$(CC) $(CFLAGS) memtest.o mymalloc.o -o memtest
