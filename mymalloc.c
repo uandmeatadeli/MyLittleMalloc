@@ -114,13 +114,7 @@ void *mymalloc(size_t size, char *file, int line){
             
             printf("Before Allocation - currChunk: %p, newChunk: %p\n", (void*)currChunk, (void*)newChunk);
             
-            if((char *)next(newChunk) > lastPossibleHeader){
-                return NULL;
-            }
-            else{
-
             currChunk = next(newChunk);
-            }
 
             printf("After Allocation - currChunk: %p, newChunk: %p\n", (void*)currChunk, (void*)newChunk);
 
