@@ -58,26 +58,6 @@ void *mymalloc(size_t size, char *file, int line){
     char *byte200 = heapstart + 200; // this is just an example of moving through the heap
     */
 
-    
-    // Check to make sure a size greater than 0 is given
-    // and that it is a multiple of 8 if not assign the 
-    // allocation size to the smallest multiple that fits
-    // request
-
-    int allocationSize;
-
-    if(size <= 0){
-        return NULL;
-    }
-    else if ((size % 8) != 0){
-
-        allocationSize = (size + 7) & ~7; 
-        
-    }else{
-
-        allocationSize = size;
-
-    }
 
     // Minimum size of a chunk
     int minSize = sizeof(header) + 8;
@@ -98,7 +78,26 @@ void *mymalloc(size_t size, char *file, int line){
         headChunk->payloadSize = MEMLENGTH - sizeof(header);
             
     }
-    
+
+    // Check to make sure a size greater than 0 is given
+    // and that it is a multiple of 8 if not assign the 
+    // allocation size to the smallest multiple that fits
+    // request
+
+    int allocationSize;
+
+    if(size <= 0){
+        return NULL;
+    }
+    else if ((size % 8) != 0){
+
+        allocationSize = (size + 7) & ~7; 
+        
+    }else{
+
+        allocationSize = size;
+
+    }
 
     // Start linked list by setting a current header to the head of the heap/headChunk
     header *currChunk = headChunk;
@@ -113,11 +112,21 @@ void *mymalloc(size_t size, char *file, int line){
             newChunk->payloadSize = allocationSize;
             newChunk->isAllocated = 1;
             
+            printf("Before Allocation - currChunk: %p, newChunk: %p\n", (void*)currChunk, (void*)newChunk);
+            
+            if((char *)next(newChunk) > lastPossibleHeader){
+                return NULL;
+            }
+            else{
+
             currChunk = next(newChunk);
+            }
+
+            printf("After Allocation - currChunk: %p, newChunk: %p\n", (void*)currChunk, (void*)newChunk);
 
             // Check if chunk is initialized by checking payload size; 
             if(currChunk->payloadSize == 0){
-                currChunk->payloadSize = (char*)&memory[MEMLENGTH] - ((char *)currChunk + sizeof(header));
+                currChunk->payloadSize = (char*)&memory[MEMLENGTH - 1] - ((char *)currChunk + sizeof(header));
             }
 
             // Once chunk is allocated return address of payload
@@ -126,16 +135,10 @@ void *mymalloc(size_t size, char *file, int line){
         else {
 
             }
-            // currChunk->payloadSize = beginning of next header position (if any), minus
-            // end of position of payload
-
                 
             //also want to check if we can coalesce/give rest of memory to chunk if remaining
             //isnt enough for a new chunk
 
-
-            // if next available chunk is right after the newChunk then we will make currChunk the next
-            // of newChunk
 
         currChunk = next(currChunk);
 
@@ -146,4 +149,7 @@ void *mymalloc(size_t size, char *file, int line){
 
 void myfree(void *ptr, char *file, int line){
 
+    header *freedChunk = (header *)((char *)ptr - sizeof(header));
+
+    freedChunk->isAllocated = 0;
 }
