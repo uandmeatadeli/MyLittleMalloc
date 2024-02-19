@@ -25,7 +25,9 @@ typedef struct node {
     //instead of next node
 } header;
 
-int align(int size) {
+#define HEADERSIZE sizeof(header)
+
+static int align(int size) {
 
     int allocationSize;
 
@@ -43,7 +45,7 @@ int align(int size) {
 }
 
 // next() function to calculate the next header - takes header pointer
-header *next(header *currHeader){
+static header *next(header *currHeader){
  
     if(currHeader->payloadSize == 0) return NULL;
 
