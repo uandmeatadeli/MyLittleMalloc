@@ -10,6 +10,8 @@ memgrind: memgrind.o mymalloc.o
 memtest: memtest.o mymalloc.o
 	$(CC) $(CFLAGS) memtest.o mymalloc.o -o memtest
 
+Hardtesting: Hardtesting.o mymalloc.o
+	$(CC) $(CFLAGS) Hardtesting.o mymalloc.o -o Hardtesting
 
 mymalloc.o: mymalloc.c mymalloc.h
 	$(CC) $(CFLAGS) -c -Wall mymalloc.c
@@ -23,5 +25,8 @@ memgrind.o: memgrind.c mymalloc.h
 test.o: test.c mymalloc.c
 	$(CC) $(CFLAGS) -c -Wall test.c
 
+Hardtesting.o: Hardtesting.c mymalloc.h
+	$(CC) $(CFLAGS) -c -Wall Hardtesting.c
+
 clean:
-	rm *.o test
+	rm -f *.o test memgrind memtest Hardtesting
