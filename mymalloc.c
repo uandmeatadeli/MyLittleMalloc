@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "mymalloc.h"
+#include <stdbool.h>
 
 #define MEMLENGTH 512
 
@@ -90,6 +91,7 @@ void *mymalloc(size_t size, char *file, int line){
     int allocationSize;
 
     if(size <= 0){
+        fprintf(stderr, "mymalloc error: Invalid size (%s:%d)\n", file, line); // Change 1: Added error message for invalid size
         return NULL;
     }
     else{
@@ -130,7 +132,7 @@ void *mymalloc(size_t size, char *file, int line){
 
         }
 
-    printf("mymalloc error: Unable to allocate memory (%s:%d)\n", file, line);
+    fprintf(stderr, "mymalloc error: Unable to allocate memory (%s:%d)\n", file, line); // Change 2: Added error message for unable to allocate memory
     return NULL;
 }
 
@@ -139,8 +141,8 @@ void myfree(void *ptr, char *file, int line){
 
     // Check if ptr is NULL
    if (!ptr) {
-       printf("myfree error: NULL pointer passed for freeing (%s:%d)\n", file, line);
-       return;
+        fprintf(stderr, "myfree error: NULL pointer passed for freeing (%s:%d)\n", file, line); // Change 3: Changed printf to fprintf for error messages
+        return;
    }
 
 
@@ -149,16 +151,39 @@ void myfree(void *ptr, char *file, int line){
 
 
    // Validate that the pointer is within the heap bounds
+   /*
    if ((char *)freedChunk < heapstart || (char *)freedChunk > (char *)memory + MEMLENGTH * sizeof(double) - sizeof(header)) {
        printf("myfree error: Pointer %p not allocated by mymalloc (%s:%d)\n", ptr, file, line);
        return;
    }
+*/
+
+   if ((char *)freedChunk < heapstart || (char *)freedChunk >= (char *)memory + MEMLENGTH * sizeof(double)) { // Change 4: Corrected comparison for heap boundaries
+        fprintf(stderr, "myfree error: Pointer %p not allocated by mymalloc (%s:%d)\n", ptr, file, line);
+        return;
+    }
+
+    header *current = (header *)heapstart;
+    bool validFree = false;
+
+    while (current && (char *)current < (char *)memory + MEMLENGTH * sizeof(double)) {
+        if (current == freedChunk && current->isAllocated) {
+            validFree = true;
+            break;
+        }
+        current = next(current);
+    }
+
+    if (!validFree) {
+        fprintf(stderr, "myfree error: Pointer %p does not match the start of any allocated chunk (%s:%d)\n", ptr, file, line);
+        return;
+    }
 
 
    // Check if the chunk is already free
    if (!freedChunk->isAllocated) {
-       printf("myfree error: Double free detected (%s:%d)\n", file, line);
-       return;
+       fprintf(stderr, "myfree error: Double free detected (%s:%d)\n", file, line);
+        return;
    }
 
 
@@ -172,6 +197,15 @@ void myfree(void *ptr, char *file, int line){
        // Merge the current chunk with the next chunk
        freedChunk->payloadSize += sizeof(header) + nextChunk->payloadSize;
    }
+
+
+/*
+
+   if ((char *)nextChunk < (char *)memory + MEMLENGTH * sizeof(double) && !nextChunk->isAllocated) { // Change 5: Corrected comparison for heap boundaries
+        freedChunk->payloadSize += sizeof(header) + nextChunk->payloadSize;
+    }
+
+    */
 
 
    // Attempt to coalesce with previous chunk if it's free
