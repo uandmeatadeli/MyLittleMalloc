@@ -22,12 +22,15 @@ typedef struct node {
     
     int payloadSize;
     
-    //struct node *next; Will use address + its own size + payload, to traverse
-    //instead of next node
+    // Will use address + its own size + payload, to traverse
+    // instead of next node
 } header;
 
+//define a HEADERSIZE which the size of our header struct
 #define HEADERSIZE sizeof(header)
 
+//Align function takes size and checks if it is a multiple of 8
+//if not it will make it a multiple of 8 and return that aligned size
 static int align(int size) {
 
     int allocationSize;
@@ -52,23 +55,15 @@ static header *next(header *currHeader){
 
     // starts at currHeader given and adds size of the header + its payload size to get
     // address right after the payload and returns it as a header pointer
-    return (header *)((char*)currHeader + sizeof(header) + align(currHeader->payloadSize));
+    return (header *)((char*)currHeader + HEADERSIZE + align(currHeader->payloadSize));
 }
 
 
 void *mymalloc(size_t size, char *file, int line){
     
     
-    /* Defined at start of file (have to check if this is ok)
-    char *heapstart = (char *) memory;
-    char *byte200 = heapstart + 200; // this is just an example of moving through the heap
-    */
-
-
     // Minimum size of a chunk
-    int minSize = sizeof(header) + 8;
-
-
+    int minChunkSize = HEADERSIZE + 8;
 
     // Decalare a header* that points to start of heap to check if it's initialized 
     // by checking payload size - if 0 then it isnt initialized - then proceed 
@@ -79,7 +74,7 @@ void *mymalloc(size_t size, char *file, int line){
     if(headChunk->payloadSize == 0){
     
         headChunk->isAllocated = 0;
-        headChunk->payloadSize = MEMLENGTH * sizeof(double) - sizeof(header);
+        headChunk->payloadSize = MEMLENGTH * sizeof(double) - HEADERSIZE;
             
     }
 
@@ -101,38 +96,43 @@ void *mymalloc(size_t size, char *file, int line){
     // Start linked list by setting a current header to the head of the heap/headChunk
     header *currChunk = headChunk;
 
-    // Loop through headers between beginning of memory and last possible header 
+    // Loop through memory while currchunk is not null 
     while(currChunk){
 
+        // Break if we are out of the bounds of our memory
         if((char *)currChunk < heapstart ||  (char*)currChunk >= (char *)&memory[MEMLENGTH - 1]){
             break;
         }
 
 
-        // Check if current chunk is NOT allocated AND the Payload size is greater or equal to size needed
+        // Check that currChunk is not allocated andn that the payload size can fit the requested size
         if((!currChunk->isAllocated) && currChunk->payloadSize >= allocationSize){
 
-                if(currChunk->payloadSize >= allocationSize + minSize){
+            // Check if we can fit another chunk after payload size being requested 
+            if(currChunk->payloadSize >= allocationSize + minChunkSize){
 
-                    header *newChunk = (header *)((char *)currChunk + sizeof(header) + allocationSize);
-                    newChunk->payloadSize = currChunk->payloadSize - allocationSize - sizeof(header);
-                    newChunk->isAllocated = 0;
-                    currChunk->payloadSize = allocationSize;
-                }
-            
-            
-                currChunk->isAllocated = 1;
+                // New Chunk is set to the chunk after the one being requested and set to NOT allocated 
+                // and currChunk becomes the requested chunk with reuqested allocation size
+                header *newChunk = (header *)((char *)currChunk + HEADERSIZE + allocationSize);
+                newChunk->payloadSize = currChunk->payloadSize - allocationSize - HEADERSIZE;
+                newChunk->isAllocated = 0;
+                currChunk->payloadSize = allocationSize;
+            }
 
-                return (void *)((char *)currChunk + sizeof(header));
+            // Set Current Chunk to allocated
+            currChunk->isAllocated = 1;
+
+            //return pointer to start of payload requested
+            return (void *)((char *)currChunk + HEADERSIZE);
         }
-                
 
-
+        // Set current chunk to the the next chunk to move through memory
         currChunk = next(currChunk);
 
-        }
+    }
 
-    fprintf(stderr, "mymalloc error: Unable to allocate memory (%s:%d)\n", file, line); // Change 2: Added error message for unable to allocate memory
+    // Not enough memory to allocate return NULL and print error
+    fprintf(stderr, "mymalloc error: Unable to allocate memory (%s:%d)\n", file, line);
     return NULL;
 }
 
@@ -145,18 +145,9 @@ void myfree(void *ptr, char *file, int line){
         return;
    }
 
-
    // Convert ptr to header pointer by subtracting header size
-   header *freedChunk = (header *)((char *)ptr - sizeof(header));
+   header *freedChunk = (header *)((char *)ptr - HEADERSIZE);
 
-
-   // Validate that the pointer is within the heap bounds
-   /*
-   if ((char *)freedChunk < heapstart || (char *)freedChunk > (char *)memory + MEMLENGTH * sizeof(double) - sizeof(header)) {
-       printf("myfree error: Pointer %p not allocated by mymalloc (%s:%d)\n", ptr, file, line);
-       return;
-   }
-*/
 
    if ((char *)freedChunk < heapstart || (char *)freedChunk >= (char *)memory + MEMLENGTH * sizeof(double)) { // Change 4: Corrected comparison for heap boundaries
         fprintf(stderr, "myfree error: Pointer %p not allocated by mymalloc (%s:%d)\n", ptr, file, line);
@@ -190,24 +181,6 @@ void myfree(void *ptr, char *file, int line){
    // Mark the chunk as free
    freedChunk->isAllocated = 0;
 
-
-   // Attempt to coalesce with next chunk if it's free
-   header *nextChunk = next(freedChunk);
-   if ((char *)nextChunk <= (char *)memory + MEMLENGTH * sizeof(double) - sizeof(header) && !nextChunk->isAllocated) {
-       // Merge the current chunk with the next chunk
-       freedChunk->payloadSize += sizeof(header) + nextChunk->payloadSize;
-   }
-
-
-/*
-
-   if ((char *)nextChunk < (char *)memory + MEMLENGTH * sizeof(double) && !nextChunk->isAllocated) { // Change 5: Corrected comparison for heap boundaries
-        freedChunk->payloadSize += sizeof(header) + nextChunk->payloadSize;
-    }
-
-    */
-
-
    // Attempt to coalesce with previous chunk if it's free
    // This requires a traversal from the start of the heap since we don't have back pointers
    header *currChunk = (header *)heapstart;
@@ -218,10 +191,16 @@ void myfree(void *ptr, char *file, int line){
    }
    if (prevChunk && !prevChunk->isAllocated) {
        // Merge the previous chunk with the freed chunk
-       prevChunk->payloadSize += sizeof(header) + freedChunk->payloadSize;
+       prevChunk->payloadSize += HEADERSIZE + freedChunk->payloadSize;
+       freedChunk = prevChunk;  // Update freedChunk to point to the coalesced block
    }
 
+   // Attempt to coalesce with next chunk if it's free
+   header *nextChunk = next(freedChunk);
+   if ((char *)nextChunk <= (char *)memory + MEMLENGTH * sizeof(double) - HEADERSIZE && !nextChunk->isAllocated) {
+       // Merge the current chunk with the next chunk
+       freedChunk->payloadSize += HEADERSIZE + nextChunk->payloadSize;
+   }
 
-  
 }
 

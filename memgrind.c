@@ -365,8 +365,7 @@ void test5() {
 
 // EXTRA tests from here ON
 
-
-
+/*
 void testCoalescing() {
     //printf("Starting coalescing test...\n");
 
@@ -421,8 +420,7 @@ void testCoalescingWithTiming() {
     printf("Average time for testCoalescing: %ld microseconds\n", totalTime / runs);
 }
 
-
-
+*/
 
 
 void testCoalescing1() {
@@ -612,7 +610,7 @@ void testOverlappingAllocations1() {
 
 void testMemoryLeakDetection() {
     printf("Test: Memory Leak Detection\n");
-    char* leakTest = malloc(10);
+//    char* leakTest = malloc(10);
     // Intentionally not freeing 'leakTest' to simulate a memory leak
     // You could implement a function to check for unfreed memory at this point
     // Example: checkForLeaks(); // This would be a custom function you implement
@@ -621,7 +619,7 @@ void testMemoryLeakDetection() {
 
 void testMemoryLeakDetection1() {
     //printf("Test: Memory Leak Detection\n");
-    char* leakTest = malloc(10);
+//    char* leakTest = malloc(10);
     // Intentionally not freeing 'leakTest' to simulate a memory leak
     // You could implement a function to check for unfreed memory at this point
     // Example: checkForLeaks(); // This would be a custom function you implement
@@ -806,44 +804,44 @@ printf("\n");
 printf("\n");
 
     // EXTRA TESTING
-    printf("#1 Coalescing Test: Attempt to allocate after freeing smaller chunks\n");
-    testCoalescing();
-    testCoalescingWithTiming();
+//    printf("#1 Coalescing Test: Attempt to allocate after freeing smaller chunks\n");
+//    testCoalescing();
+//    testCoalescingWithTiming();
 
-    printf("#2 Test Coalesing again\n");
+    printf("#1 Test Coalesing\n");
     testCoalescing1();
 
-    printf("#3 Test function for alignment requirements\n");
+    printf("#2 Test function for alignment requirements\n");
     testAlignment();
     runTestWithTiming( testAlignment1, "Alignment Testing");
 
-    printf("#4 Test Randomized good\n");
+    printf("#3 Test Randomized good\n");
     testRandomized();
     runTestWithTiming( testRandomized1, " Ranomdized Testing");
 
 
-    printf("#5 Test if theire are Overlaps in allocation \n");
+    printf("#4 Test if theire are Overlaps in allocation \n");
     testOverlappingAllocations();
     runTestWithTiming(testOverlappingAllocations1, "Overlaps Testing");
 
     
     
-    printf("#6 \n");
+    printf("#5 \n");
     testMemoryLeakDetection();
     runTestWithTiming( testMemoryLeakDetection1, "testMemoryLeakDetection ");
 
    
-    printf("#7 \n");
+    printf("#6 \n");
     testExactFitAllocation();
     runTestWithTiming( testExactFitAllocation1, "testExactFitAllocation ");
 
     
-    printf("#8 \n");
+    printf("#7 \n");
     testFragmentationHandling();
     runTestWithTiming( testFragmentationHandling1, "testFragmentationHandling ");
 
     
-    printf("#9 \n");
+    printf("#8 \n");
     stressTestRandomOperations();
     runTestWithTiming( stressTestRandomOperations1, "stressTestRandomOperations ");
 
