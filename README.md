@@ -72,7 +72,7 @@ For Memtest use:
 ```
 For Hardtesting use:
 ```bash
-./hardtesting
+./Hardtesting
 ```
 To remove files created by make:
 ```bash

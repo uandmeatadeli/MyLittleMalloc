@@ -80,7 +80,7 @@ For Memtest use:
 
 For Hardtesting use:
 
-./hardtesting
+./Hardtesting
 
 To remove files created by make:
 
